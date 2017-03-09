@@ -1,11 +1,40 @@
 {
+    "name": "boo/lua-parser",
+    "description": "A Lua parse aiming to be compatible with anything found within World of Warcraft's WTF directory.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jonas Stendahl",
+            "email": "jonas@stendahl.me"
+        }
+    ],
+    "support": {
+       "issues": "https://github.com/jyggen/lua-parser/issues",
+       "source": "https://github.com/jyggen/lua-parser"
+    },
     "require": {
+        "php": "^7.0",
         "doctrine/lexer": "^1.0"
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^v2.0",
+        "jakub-onderka/php-parallel-lint": "^0.9",
         "phpro/grumphp": "^0.11.3",
-        "symfony/finder": "^3.0",
-        "sebastian/diff": "^1.0",
-        "symfony/var-dumper": "^3.0"
+        "symfony/finder": "^3.2.4",
+        "sebastian/diff": "^1.4.1",
+        "sebastian/phpcpd": "^2.0",
+        "sensiolabs/security-checker": "^4.0",
+        "symfony/var-dumper": "^3.2.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Boo\\LuaParser\\": "src/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.x-dev"
+        }
     }
 }

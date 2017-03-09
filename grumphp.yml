@@ -1,0 +1,18 @@
+---
+parameters:
+  ascii:
+    failed: ~
+    succeeded: ~
+  tasks:
+    composer:
+      no_check_all: true
+      strict: true
+    git_conflict: ~
+    jsonlint:
+      detect_key_conflicts: true
+    phpcpd: ~
+    phpcsfixer2:
+      allow_risky: true
+    phplint: ~
+    securitychecker: ~
+    yamllint: ~
