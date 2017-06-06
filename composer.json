@@ -26,6 +26,7 @@
         "phpunit/phpunit": "^6.0.8",
         "sebastian/diff": "^1.4.1",
         "sebastian/phpcpd": "^3.0.0",
+        "symfony/console": "^3.0",
         "symfony/var-dumper": "^3.2.6",
         "symfony/finder": "^3.2.6"
     },

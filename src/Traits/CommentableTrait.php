@@ -13,19 +13,17 @@ declare(strict_types=1);
 
 namespace Boo\LuaParser\Traits;
 
-use Boo\LuaParser\Types\CommentType;
-
 trait CommentableTrait
 {
     /**
-     * @var CommentType
+     * @var string|null
      */
     private $comment;
 
     /**
      * Gets the object's comment.
      *
-     * @return CommentType|null
+     * @return string|null
      */
     public function getComment()
     {
@@ -35,9 +33,9 @@ trait CommentableTrait
     /**
      * Sets the object's comment.
      *
-     * @param CommentType $comment
+     * @param string $comment
      */
-    public function setComment(CommentType $comment)
+    public function setComment(string $comment)
     {
         $this->comment = $comment;
     }

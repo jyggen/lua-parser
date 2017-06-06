@@ -35,9 +35,6 @@ final class Parser
      */
     private $lexer;
 
-    /**
-     * @param string $lua
-     */
     public function __construct(string $lua)
     {
         $this->lexer = new Lexer();
@@ -46,8 +43,6 @@ final class Parser
 
     /**
      * Gets the Lua string's AST.
-     *
-     * @return array
      */
     public function getAst(): array
     {
@@ -123,7 +118,7 @@ final class Parser
                 $potentialComment = $this->lexer->peek();
 
                 if ($potentialComment['type'] === Lexer::T_COMMENT) {
-                    $context->setComment(new Types\CommentType($potentialComment['value']));
+                    $context->setComment($potentialComment['value']);
                 }
 
                 \array_pop($contexts);
@@ -194,7 +189,7 @@ final class Parser
                 }
 
                 if ($potentialComment['type'] === Lexer::T_COMMENT) {
-                    $value->setComment(new Types\CommentType($potentialComment['value']));
+                    $value->setComment($potentialComment['value']);
                 }
 
                 if ($context instanceof Types\ArrayItemType || $context instanceof Types\VariableType) {
@@ -243,7 +238,7 @@ final class Parser
                     $lua .= ',';
 
                     if ($value->getComment() !== null) {
-                        $lua .= ' --'.$value->getComment()->getValue();
+                        $lua .= ' --'.$value->getComment();
                     }
 
                     $lua .= PHP_EOL;
@@ -266,13 +261,13 @@ final class Parser
                     $lua .= ',';
 
                     if ($arrayItem->getValue()->getComment() !== null) {
-                        $commentValue = $arrayItem->getValue()->getComment()->getValue();
+                        $commentValue = $arrayItem->getValue()->getComment();
 
                         if (\mb_substr($commentValue, -1) === ',') {
                             $lua = \mb_substr($lua, 0, -1);
                         }
 
-                        $lua .= ' --'.$arrayItem->getValue()->getComment()->getValue();
+                        $lua .= ' --'.$arrayItem->getValue()->getComment();
                     }
 
                     $lua .= PHP_EOL;

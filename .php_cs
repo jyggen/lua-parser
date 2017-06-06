@@ -24,7 +24,7 @@ file that was distributed with this source code.
 EOT;
 
 $config = Config::create();
-$finder = Finder::create()->name('.php_cs')->ignoreDotFiles(false)->exclude([
+$finder = Finder::create()->name('.php_cs')->name('generate-fixtures')->ignoreDotFiles(false)->exclude([
     'build',
 ])->in(__DIR__);
 

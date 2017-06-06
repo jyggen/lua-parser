@@ -13,21 +13,19 @@ declare(strict_types=1);
 
 namespace Boo\LuaParser\Interfaces;
 
-use Boo\LuaParser\Types\CommentType;
-
 interface ValueInterface
 {
     /**
      * Gets the array value's comment.
      *
-     * @return CommentType|null
+     * @return string|null
      */
     public function getComment();
 
     /**
      * Sets the array value's comment.
      *
-     * @param CommentType $comment
+     * @param string $comment
      */
-    public function setComment(CommentType $comment);
+    public function setComment(string $comment);
 }
