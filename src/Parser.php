@@ -61,12 +61,12 @@ final class Parser
         $contexts = [];
 
         while (null !== $this->lexer->glimpse()) {
-            end($contexts);
+            \end($contexts);
             $this->lexer->moveNext();
 
             $type = $this->lexer->lookahead['type'];
             $value = $this->lexer->lookahead['value'];
-            $contextKey = key($contexts);
+            $contextKey = \key($contexts);
             $context = ($contextKey !== null) ? $contexts[$contextKey] : null;
 
             if ($this->lexer->isNextTokenAny([
@@ -81,10 +81,10 @@ final class Parser
                     continue;
                 }
 
-                $lastCharacter = mb_substr(trim($value), -1);
+                $lastCharacter = \mb_substr(\trim($value), -1);
 
                 if ($this->lexer->isA($lastCharacter, Lexer::T_COMMA) === true) {
-                    array_pop($contexts);
+                    \array_pop($contexts);
                 }
 
                 continue;
@@ -92,7 +92,7 @@ final class Parser
 
             if ($this->lexer->isNextToken(Lexer::T_COMMA) === true) {
                 if ($context instanceof Types\ArrayItemType) {
-                    array_pop($contexts);
+                    \array_pop($contexts);
                 }
 
                 continue;
@@ -126,7 +126,7 @@ final class Parser
                     $context->setComment(new Types\CommentType($potentialComment['value']));
                 }
 
-                array_pop($contexts);
+                \array_pop($contexts);
                 continue;
             }
 
@@ -140,7 +140,7 @@ final class Parser
                         'value' => $value,
                         'context' => $context,
                     ]);
-                    throw new UnexpectedValueException(get_class($context).' is not an instance of ArrayType');
+                    throw new UnexpectedValueException(\get_class($context).' is not an instance of ArrayType');
                 }
 
                 switch ($key['type']) {
@@ -232,13 +232,13 @@ final class Parser
 
     private function compile(TypeInterface $type, int $depth = 0): string
     {
-        switch (get_class($type)) {
+        switch (\get_class($type)) {
             case ArrayType::class:
                 $lua = '{'.PHP_EOL;
                 ++$depth;
 
                 foreach ($type->getKeylessValues() as $value) {
-                    $lua .= str_repeat("\t", $depth);
+                    $lua .= \str_repeat("\t", $depth);
                     $lua .= $this->compile($value, $depth);
                     $lua .= ',';
 
@@ -251,9 +251,9 @@ final class Parser
 
                 foreach ($type->getItems() as $arrayItem) {
                     $key = $arrayItem->getKey();
-                    $lua .= str_repeat("\t", $depth);
+                    $lua .= \str_repeat("\t", $depth);
 
-                    switch (get_class($key)) {
+                    switch (\get_class($key)) {
                         case IntegerType::class:
                             $lua .= '['.(string) $key.'] = ';
                             break;
@@ -268,8 +268,8 @@ final class Parser
                     if ($arrayItem->getValue()->getComment() !== null) {
                         $commentValue = $arrayItem->getValue()->getComment()->getValue();
 
-                        if (mb_substr($commentValue, -1) === ',') {
-                            $lua = mb_substr($lua, 0, -1);
+                        if (\mb_substr($commentValue, -1) === ',') {
+                            $lua = \mb_substr($lua, 0, -1);
                         }
 
                         $lua .= ' --'.$arrayItem->getValue()->getComment()->getValue();
@@ -279,7 +279,7 @@ final class Parser
                 }
 
                 --$depth;
-                $lua .= str_repeat("\t", $depth);
+                $lua .= \str_repeat("\t", $depth);
                 $lua .= '}';
 
                 return $lua;
@@ -294,7 +294,7 @@ final class Parser
             case VariableType::class:
                 return $type->getName().' = '.$this->compile($type->getValue(), $depth).PHP_EOL;
             default:
-                throw new UnexpectedValueException('Unable to compile '.get_class($type).' to lua');
+                throw new UnexpectedValueException('Unable to compile '.\get_class($type).' to lua');
         }
     }
 }

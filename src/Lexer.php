@@ -170,31 +170,30 @@ final class Lexer extends AbstractLexer
             return self::T_NULL;
         }
 
-        if (is_numeric($value)) {
-            if (mb_strpos($value, '.') !== false || mb_stripos($value, 'e') !== false) {
+        if (\is_numeric($value)) {
+            if (\mb_strpos($value, '.') !== false || \mb_stripos($value, 'e') !== false) {
                 return self::T_FLOAT;
             }
 
             return self::T_INTEGER;
         }
 
-        if ($value[0] === '"' && mb_substr($value, -1) === '"') {
-            $value = mb_substr($value, 1, -1);
+        if ($value[0] === '"' && \mb_substr($value, -1) === '"') {
+            $value = \mb_substr($value, 1, -1);
 
             return self::T_STRING;
         }
 
-        if (mb_substr($value, 0, 2) === '--') {
-            $value = mb_substr(trim($value), 2);
+        if (\mb_substr($value, 0, 2) === '--') {
+            $value = \mb_substr(\trim($value), 2);
 
             return self::T_COMMENT;
         }
 
-        if (ctype_alpha($value[0]) || $value[0] === '_') {
+        if (\ctype_alpha($value[0]) || $value[0] === '_') {
             return self::T_VARIABLE;
         }
 
-        dump($value);
-        die(' ^ unknown');
+        throw new \UnexpectedValueException();
     }
 }

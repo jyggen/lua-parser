@@ -13,6 +13,17 @@ parameters:
     phpcpd: ~
     phpcsfixer2:
       allow_risky: true
+      config: .php_cs
+      using_cache: true
     phplint: ~
-    securitychecker: ~
+    phpstan:
+      level: 7
+    xmllint:
+      dtd_validation: true
+      load_from_net: true
+      scheme_validation: true
+      triggered_by:
+        - xml
+        - xml.dist
+      x_include: true
     yamllint: ~
