@@ -37,7 +37,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Boo\\LuaParser\\": "tests/"
+            "Boo\\LuaParser\\Tests\\": "tests/"
         }
     },
     "extra": {
