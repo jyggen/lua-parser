@@ -1,0 +1,76 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the boo/lua-parser library.
+ *
+ * (c) Jonas Stendahl <jonas@stendahl.me>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+use Boo\LuaParser\Parser;
+use SebastianBergmann\Diff\Differ;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
+
+\chdir(__DIR__.'/..');
+
+require 'vendor/autoload.php';
+
+(function () {
+    $name = \basename(__FILE__);
+    $application = new Application($name, '1.0.0');
+    $command = $application->register($name);
+
+    $command->addArgument('lua', InputArgument::REQUIRED, 'Path to a Lua file');
+    $command->setCode(function (InputInterface $input, OutputInterface $output) {
+        $style = new SymfonyStyle($input, $output);
+        $path = $input->getArgument('lua');
+
+        if (\is_file($path) === false || pathinfo($path, PATHINFO_EXTENSION) !== 'lua') {
+            $style->error('"'.$path.'" is not a valid Lua file.');
+
+            return 1;
+        }
+
+        $lua = \preg_replace('/\R/u', PHP_EOL, file_get_contents($path));
+        $differ = new Differ();
+        $parser = new Parser($lua);
+
+        if (\md5($lua) !== \md5($parser->getLua())) {
+            $lines = $differ->diffToArray($lua, $parser->getLua());
+
+            foreach ($lines as $line) {
+                switch ($line[1]) {
+                    case 0:
+                        $style->text('   '.$line[0]);
+                        break;
+                    case 1:
+                        $style->text('<fg=green>  +'.$line[0].'</>');
+                        break;
+                    case 2:
+                        $style->text('<fg=red>  -'.$line[0].'</>');
+                        break;
+                }
+            }
+
+            $style->error('File parsed nondeterministically!');
+
+            return 1;
+        }
+
+        $style->success('File parsed deterministically!');
+    });
+
+    $application->setDefaultCommand($name, true);
+    $application->run();
+})();

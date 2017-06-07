@@ -35,11 +35,10 @@ final class ParserTest extends TestCase
         $lua = \preg_replace('/\R/u', PHP_EOL, $file->getContents());
         $parser = new Parser($lua);
 
-        //$parser->getAst();
-
-        //dump(round($file->getSize() / 1024 / 1024, 2).'MB');
-        //dump(round(memory_get_usage() / 1024 / 1024, 2).'MB');
-
-        $this->assertSame(\md5($lua), \md5($parser->getLua()));
+        $this->assertSame(
+            \md5($lua),
+            \md5($parser->getLua()),
+            './bin/inspect-lua '.$file->getPathname()
+        );
     }
 }
