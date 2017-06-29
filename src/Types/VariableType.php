@@ -61,7 +61,7 @@ final class VariableType implements TypeInterface
     /**
      * Sets the variable's value.
      */
-    public function setValue(ValueInterface $value)
+    public function setValue(ValueInterface $value): void
     {
         $this->value = $value;
     }

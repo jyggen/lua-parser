@@ -36,7 +36,7 @@ final class ArrayType implements TypeInterface, ValueInterface
      *
      * @param ArrayItemType $item
      */
-    public function addItem(ArrayItemType $item)
+    public function addItem(ArrayItemType $item): void
     {
         $this->items[] = $item;
     }
@@ -46,7 +46,7 @@ final class ArrayType implements TypeInterface, ValueInterface
      *
      * @param ValueInterface $value
      */
-    public function addKeylessValue(ValueInterface $value)
+    public function addKeylessValue(ValueInterface $value): void
     {
         $this->keylessValues[] = $value;
     }

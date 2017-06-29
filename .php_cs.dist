@@ -34,9 +34,8 @@ $config->setLineEnding("\n");
 $config->setRiskyAllowed(true);
 $config->setUsingCache(true);
 $config->setRules([
-    '@PHP70Migration' => true,
     '@PHP70Migration:risky' => true,
-    '@PHP71Migration' => false, // PHP 7.1+
+    '@PHP71Migration' => true,
     '@Symfony' => true,
     '@Symfony:risky' => true,
     'array_syntax' => [
@@ -44,16 +43,13 @@ $config->setRules([
     ],
     'combine_consecutive_unsets' => true,
     'declare_strict_types' => true,
-    'doctrine_annotation_braces' => true,
-    'doctrine_annotation_indentation' => true,
-    'doctrine_annotation_spaces' => true,
     'header_comment' => [
         'header' => $header,
     ],
     'heredoc_to_nowdoc' => true,
     'linebreak_after_opening_tag' => true,
     'list_syntax' => [
-        'syntax' => 'long', // "short" in PHP 7.1+
+        'syntax' => 'short',
     ],
     'mb_str_functions' => true,
     'native_function_invocation' => true,

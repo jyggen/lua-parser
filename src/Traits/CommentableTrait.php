@@ -25,7 +25,7 @@ trait CommentableTrait
      *
      * @return string|null
      */
-    public function getComment()
+    public function getComment(): ?string
     {
         return $this->comment;
     }
@@ -35,7 +35,7 @@ trait CommentableTrait
      *
      * @param string $comment
      */
-    public function setComment(string $comment)
+    public function setComment(string $comment): void
     {
         $this->comment = $comment;
     }

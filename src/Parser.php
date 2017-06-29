@@ -43,6 +43,8 @@ final class Parser
 
     /**
      * Gets the Lua string's AST.
+     *
+     * @throws UnexpectedValueException
      */
     public function getAst(): array
     {
@@ -110,7 +112,7 @@ final class Parser
                     continue;
                 }
 
-                die('noo');
+                throw new UnexpectedValueException();
             }
 
             if ($this->lexer->isNextToken(Lexer::T_CURLY_BRACKET_CLOSE) === true) {
@@ -129,12 +131,6 @@ final class Parser
                 $key = $this->lexer->glimpse();
 
                 if ($context instanceof Types\ArrayType === false) {
-                    dump([
-                        'ast' => $ast,
-                        'type' => $this->lexer->getLiteral($type),
-                        'value' => $value,
-                        'context' => $context,
-                    ]);
                     throw new UnexpectedValueException(\get_class($context).' is not an instance of ArrayType');
                 }
 
@@ -202,11 +198,10 @@ final class Parser
                     continue;
                 }
 
-                die('ouch :(');
+                throw new UnexpectedValueException();
             }
 
-            dump('"'.$value.'" is of type '.$this->lexer->getLiteral($type));
-            die;
+            throw new UnexpectedValueException();
         }
 
         $this->ast = $ast;
@@ -225,6 +220,11 @@ final class Parser
         return $lua;
     }
 
+    /**
+     * Compiles a type into Lua.
+     *
+     * @throws UnexpectedValueException
+     */
     private function compile(TypeInterface $type, int $depth = 0): string
     {
         switch (\get_class($type)) {

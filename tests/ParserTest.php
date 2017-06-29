@@ -39,7 +39,7 @@ final class ParserTest extends TestCase
     /**
      * @dataProvider fixtureProvider
      */
-    public function testAgainstFixtures(SplFileInfo $file)
+    public function testAgainstFixtures(SplFileInfo $file): void
     {
         $lua = \preg_replace('/\R/u', PHP_EOL, $file->getContents());
         $parser = new Parser($lua);

@@ -64,7 +64,7 @@ final class ArrayItemType implements TypeInterface
      *
      * @param ValueInterface $value
      */
-    public function setValue(ValueInterface $value)
+    public function setValue(ValueInterface $value): void
     {
         $this->value = $value;
     }

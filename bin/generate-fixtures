@@ -24,13 +24,13 @@ use Symfony\Component\Finder\Finder;
 
 require 'vendor/autoload.php';
 
-(function () {
+(function (): void {
     $name = \basename(__FILE__);
     $application = new Application($name, '1.0.0');
     $command = $application->register($name);
 
     $command->addArgument('path', InputArgument::REQUIRED, 'Path to your World of Warcraft directory');
-    $command->setCode(function (InputInterface $input, OutputInterface $output) {
+    $command->setCode(function (InputInterface $input, OutputInterface $output): int {
         $style = new SymfonyStyle($input, $output);
         $path = $input->getArgument('path');
         $wtfPath = $path.'/WTF';
@@ -64,6 +64,8 @@ require 'vendor/autoload.php';
         }
 
         $style->progressFinish();
+
+        return 0;
     });
 
     $application->setDefaultCommand($name, true);

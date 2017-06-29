@@ -20,12 +20,12 @@ interface ValueInterface
      *
      * @return string|null
      */
-    public function getComment();
+    public function getComment(): ?string;
 
     /**
      * Sets the array value's comment.
      *
      * @param string $comment
      */
-    public function setComment(string $comment);
+    public function setComment(string $comment): void;
 }

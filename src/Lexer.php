@@ -14,9 +14,15 @@ declare(strict_types=1);
 namespace Boo\LuaParser;
 
 use Doctrine\Common\Lexer\AbstractLexer;
+use UnexpectedValueException;
 
 final class Lexer extends AbstractLexer
 {
+    /**
+     * @var int
+     */
+    const COMMENT_LENGTH = 2;
+
     /**
      * @var int
      */
@@ -95,7 +101,7 @@ final class Lexer extends AbstractLexer
     /**
      * {@inheritdoc}
      */
-    protected function getCatchablePatterns()
+    protected function getCatchablePatterns(): array
     {
         return [
             '--.*?\R',
@@ -109,7 +115,7 @@ final class Lexer extends AbstractLexer
     /**
      * {@inheritdoc}
      */
-    protected function getModifiers()
+    protected function getModifiers(): string
     {
         return 'iu';
     }
@@ -117,7 +123,7 @@ final class Lexer extends AbstractLexer
     /**
      * {@inheritdoc}
      */
-    protected function getNonCatchablePatterns()
+    protected function getNonCatchablePatterns(): array
     {
         return [
             '\s+',
@@ -127,8 +133,10 @@ final class Lexer extends AbstractLexer
 
     /**
      * {@inheritdoc}
+     *
+     * @throws UnexpectedValueException
      */
-    protected function getType(&$value)
+    protected function getType(&$value): int
     {
         if ($value === '=') {
             return self::T_EQUAL;
@@ -184,8 +192,8 @@ final class Lexer extends AbstractLexer
             return self::T_STRING;
         }
 
-        if (\mb_substr($value, 0, 2) === '--') {
-            $value = \mb_substr(\trim($value), 2);
+        if (\mb_substr($value, 0, self::COMMENT_LENGTH) === '--') {
+            $value = \mb_substr(\trim($value), self::COMMENT_LENGTH);
 
             return self::T_COMMENT;
         }
@@ -194,6 +202,6 @@ final class Lexer extends AbstractLexer
             return self::T_VARIABLE;
         }
 
-        throw new \UnexpectedValueException();
+        throw new UnexpectedValueException();
     }
 }
