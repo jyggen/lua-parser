@@ -23,7 +23,13 @@ final class ParserTest extends TestCase
 {
     public function fixtureProvider(): Generator
     {
-        $finder = (new Finder())->in('tests/Fixtures')->name('*.lua');
+        $finder = new Finder();
+
+        $finder->in('tests/Fixtures');
+        $finder->name('*.lua');
+        $finder->sort(function (SplFileInfo $a, SplFileInfo $b) {
+            return $a->getSize() - $b->getSize();
+        });
 
         foreach ($finder as $file) {
             yield $file->getPathname() => [$file];
