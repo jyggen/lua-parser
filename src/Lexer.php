@@ -31,6 +31,16 @@ final class Lexer extends AbstractLexer
     /**
      * @var int
      */
+    const T_ASSOC_KEY = 666;
+
+    /**
+     * @var int
+     */
+    const T_INDEX_KEY = 667;
+
+    /**
+     * @var int
+     */
     const T_STRING = 2;
 
     /**
@@ -105,6 +115,9 @@ final class Lexer extends AbstractLexer
     {
         return [
             '--.*?\R',
+            '\[-?(?:[0-9]+(?:[\.][0-9]+)*)(?:e[+-]?[0-9]+)?\] = ',
+            '\["[^"\\\\]*(?:\\\\.[^"\\\\]*)*"\] = ',
+            '[a-z_\\\][a-z0-9_\:\\\]*[a-z0-9_]{1} = ',
             '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"',
             '-\d+(?:\.\d+)?',
             '[a-z_\\\][a-z0-9_\:\\\]*[a-z0-9_]{1}',
@@ -133,55 +146,60 @@ final class Lexer extends AbstractLexer
 
     /**
      * {@inheritdoc}
-     *
-     * @throws UnexpectedValueException
      */
     protected function getType(&$value): int
     {
-        if ($value === '=') {
-            return self::T_EQUAL;
+        switch ($value) {
+            case '{':
+                return self::T_CURLY_BRACKET_OPEN;
+            case '}':
+                return self::T_CURLY_BRACKET_CLOSE;
+            case ',':
+                return self::T_COMMA;
+            case 'nil':
+                return self::T_NULL;
         }
 
-        if ($value === '{') {
-            return self::T_CURLY_BRACKET_OPEN;
+        return $this->getAdvancedTypes($value);
+    }
+
+    /**
+     * @throws UnexpectedValueException
+     */
+    private function getAdvancedTypes(string &$value): int
+    {
+        if (\mb_substr($value, -4) === '] = ' && $value[0] === '[') {
+            $value = \mb_substr($value, 1, -4);
+
+            if ($value[0] === '"' && \mb_substr($value, -1) === '"') {
+                $value = \mb_substr($value, 1, -1);
+
+                return self::T_ASSOC_KEY;
+            }
+
+            $value = (int) $value;
+
+            return self::T_INDEX_KEY;
         }
 
-        if ($value === '}') {
-            return self::T_CURLY_BRACKET_CLOSE;
-        }
+        if (\mb_substr($value, -3) === ' = ') {
+            $value = \mb_substr($value, 0, -3);
 
-        if ($value === '[') {
-            return self::T_SQUARE_BRACKET_OPEN;
-        }
-
-        if ($value === ']') {
-            return self::T_SQUARE_BRACKET_CLOSE;
-        }
-
-        if ($value === '"') {
-            return self::T_DOUBLE_QUOTE;
-        }
-
-        if ($value === ',') {
-            return self::T_COMMA;
-        }
-
-        if ($value === '-') {
-            return self::T_MINUS;
+            return self::T_VARIABLE;
         }
 
         if ($value === 'true' || $value === 'false') {
-            return self::T_BOOLEAN;
-        }
+            $value = ($value === 'true') ? true : false;
 
-        if ($value === 'nil') {
-            return self::T_NULL;
+            return self::T_BOOLEAN;
         }
 
         if (\is_numeric($value)) {
             if (\mb_strpos($value, '.') !== false || \mb_stripos($value, 'e') !== false) {
                 return self::T_FLOAT;
             }
+
+            $value = (int) $value;
 
             return self::T_INTEGER;
         }
@@ -202,6 +220,6 @@ final class Lexer extends AbstractLexer
             return self::T_VARIABLE;
         }
 
-        throw new UnexpectedValueException();
+        throw new UnexpectedValueException($value);
     }
 }

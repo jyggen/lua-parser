@@ -39,30 +39,21 @@ final class VariableType implements TypeInterface
     }
 
     /**
-     * Gets the variable name.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    /**
-     * Gets the variable's value.
-     *
-     * @return ValueInterface
-     */
-    public function getValue(): ValueInterface
-    {
-        return $this->value;
-    }
-
-    /**
      * Sets the variable's value.
      */
     public function setValue(ValueInterface $value): void
     {
         $this->value = $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toLua(int $depth = 0): string
+    {
+        return \vsprintf('%s = %s', [
+            $this->name,
+            $this->value->toLua($depth),
+        ]).PHP_EOL;
     }
 }

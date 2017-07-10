@@ -42,12 +42,19 @@ require 'vendor/autoload.php';
             return 1;
         }
 
-        $lua = \preg_replace('/\R/u', PHP_EOL, file_get_contents($path));
+        $theirs = \preg_replace('/\R/u', PHP_EOL, file_get_contents($path));
         $differ = new Differ();
-        $parser = new Parser($lua);
+        $before = ['time' => microtime(true), 'memory' => memory_get_peak_usage(true)];
+        $parser = new Parser($theirs);
+        $ours = $parser->getLua();
+        $after = ['time' => microtime(true), 'memory' => memory_get_peak_usage(true)];
+        $time = ($after['time'] - $before['time']) * 1000;
+        $memory = ($after['memory'] - $before['memory']) / 1024 / 1024;
 
-        if (\md5($lua) !== \md5($parser->getLua())) {
-            $lines = $differ->diffToArray($lua, $parser->getLua());
+        if (\md5($theirs) !== \md5($ours)) {
+            $theirs = explode(PHP_EOL, $theirs);
+            $ours = explode(PHP_EOL, $ours);
+            $lines = $differ->diffToArray($theirs, $ours);
 
             foreach ($lines as $line) {
                 switch ($line[1]) {
@@ -63,12 +70,20 @@ require 'vendor/autoload.php';
                 }
             }
 
-            $style->error('File parsed nondeterministically!');
+            $style->error(sprintf(
+                'File parsed nondeterministically in %.2fms using %.2fMiB of memory.',
+                $time,
+                $memory
+            ));
 
             return 1;
         }
 
-        $style->success('File parsed deterministically!');
+        $style->success(sprintf(
+            'File parsed deterministically in %.2f ms using %.2f MiB of memory.',
+            $time,
+            $memory
+        ));
 
         return 0;
     });

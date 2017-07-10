@@ -14,7 +14,28 @@ declare(strict_types=1);
 namespace Boo\LuaParser\Types;
 
 use Boo\LuaParser\Interfaces\KeyInterface;
+use Boo\LuaParser\Interfaces\ValueInterface;
+use Boo\LuaParser\Traits\CommentableTrait;
 
-final class IntegerType extends AbstractScalarType implements KeyInterface
+final class IntegerType implements KeyInterface, ValueInterface
 {
+    use CommentableTrait;
+
+    /**
+     * @var int
+     */
+    private $value;
+
+    public function __construct(int $value)
+    {
+        $this->value = $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toLua(int $depth = 0): string
+    {
+        return (string) $this->value;
+    }
 }

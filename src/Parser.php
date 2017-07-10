@@ -13,14 +13,8 @@ declare(strict_types=1);
 
 namespace Boo\LuaParser;
 
-use Boo\LuaParser\Interfaces\TypeInterface;
 use Boo\LuaParser\Types\ArrayType;
-use Boo\LuaParser\Types\BooleanType;
-use Boo\LuaParser\Types\FloatType;
-use Boo\LuaParser\Types\IntegerType;
-use Boo\LuaParser\Types\NullType;
-use Boo\LuaParser\Types\StringType;
-use Boo\LuaParser\Types\VariableType;
+use Boo\LuaParser\Types\CommentType;
 use UnexpectedValueException;
 
 final class Parser
@@ -63,13 +57,21 @@ final class Parser
 
             $type = $this->lexer->lookahead['type'];
             $value = $this->lexer->lookahead['value'];
+
             $contextKey = \key($contexts);
             $context = ($contextKey !== null) ? $contexts[$contextKey] : null;
 
-            if ($this->lexer->isNextTokenAny([
-                Lexer::T_EQUAL,
-                Lexer::T_SQUARE_BRACKET_CLOSE,
-            ]) === true) {
+            if ($this->lexer->isNextTokenAny([Lexer::T_ASSOC_KEY, Lexer::T_INDEX_KEY]) === true) {
+                if ($context instanceof Types\ArrayType === false) {
+                    throw new UnexpectedValueException(\get_class($context).' is not an instance of ArrayType');
+                }
+
+                $context->addItem($contexts[] = new Types\ArrayItemType(
+                    ($type === Lexer::T_ASSOC_KEY)
+                        ? new Types\StringType($value)
+                        : new Types\IntegerType($value)
+                ));
+
                 continue;
             }
 
@@ -120,8 +122,10 @@ final class Parser
                 $potentialComment = $this->lexer->peek();
 
                 if ($potentialComment['type'] === Lexer::T_COMMENT) {
-                    $context->setComment($potentialComment['value']);
+                    $context->setComment(new CommentType($potentialComment['value']));
                 }
+
+                $this->lexer->resetPeek();
 
                 \array_pop($contexts);
                 continue;
@@ -184,8 +188,10 @@ final class Parser
                     $potentialComment = $this->lexer->peek();
                 }
 
+                $this->lexer->resetPeek();
+
                 if ($potentialComment['type'] === Lexer::T_COMMENT) {
-                    $value->setComment($potentialComment['value']);
+                    $value->setComment(new CommentType($potentialComment['value']));
                 }
 
                 if ($context instanceof Types\ArrayItemType || $context instanceof Types\VariableType) {
@@ -214,82 +220,9 @@ final class Parser
         $lua = PHP_EOL;
 
         foreach ($this->getAst() as $type) {
-            $lua .= $this->compile($type);
+            $lua .= $type->toLua();
         }
 
         return $lua;
-    }
-
-    /**
-     * Compiles a type into Lua.
-     *
-     * @throws UnexpectedValueException
-     */
-    private function compile(TypeInterface $type, int $depth = 0): string
-    {
-        switch (\get_class($type)) {
-            case ArrayType::class:
-                $lua = '{'.PHP_EOL;
-                ++$depth;
-
-                foreach ($type->getKeylessValues() as $value) {
-                    $lua .= \str_repeat("\t", $depth);
-                    $lua .= $this->compile($value, $depth);
-                    $lua .= ',';
-
-                    if ($value->getComment() !== null) {
-                        $lua .= ' --'.$value->getComment();
-                    }
-
-                    $lua .= PHP_EOL;
-                }
-
-                foreach ($type->getItems() as $arrayItem) {
-                    $key = $arrayItem->getKey();
-                    $lua .= \str_repeat("\t", $depth);
-
-                    switch (\get_class($key)) {
-                        case IntegerType::class:
-                            $lua .= '['.(string) $key.'] = ';
-                            break;
-                        case StringType::class:
-                            $lua .= '["'.(string) $key.'"] = ';
-                            break;
-                    }
-
-                    $lua .= $this->compile($arrayItem->getValue(), $depth);
-                    $lua .= ',';
-
-                    if ($arrayItem->getValue()->getComment() !== null) {
-                        $commentValue = $arrayItem->getValue()->getComment();
-
-                        if (\mb_substr($commentValue, -1) === ',') {
-                            $lua = \mb_substr($lua, 0, -1);
-                        }
-
-                        $lua .= ' --'.$arrayItem->getValue()->getComment();
-                    }
-
-                    $lua .= PHP_EOL;
-                }
-
-                --$depth;
-                $lua .= \str_repeat("\t", $depth);
-                $lua .= '}';
-
-                return $lua;
-            case BooleanType::class:
-            case FloatType::class:
-            case IntegerType::class:
-                return (string) $type;
-            case StringType::class:
-                return '"'.(string) $type.'"';
-            case NullType::class:
-                return 'nil';
-            case VariableType::class:
-                return $type->getName().' = '.$this->compile($type->getValue(), $depth).PHP_EOL;
-            default:
-                throw new UnexpectedValueException('Unable to compile '.\get_class($type).' to lua');
-        }
     }
 }

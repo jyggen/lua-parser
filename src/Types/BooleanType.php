@@ -13,6 +13,28 @@ declare(strict_types=1);
 
 namespace Boo\LuaParser\Types;
 
-final class BooleanType extends AbstractScalarType
+use Boo\LuaParser\Interfaces\ValueInterface;
+use Boo\LuaParser\Traits\CommentableTrait;
+
+final class BooleanType implements ValueInterface
 {
+    use CommentableTrait;
+
+    /**
+     * @var bool
+     */
+    private $value;
+
+    public function __construct(bool $value)
+    {
+        $this->value = $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toLua(int $depth = 0): string
+    {
+        return ($this->value === true) ? 'true' : 'false';
+    }
 }

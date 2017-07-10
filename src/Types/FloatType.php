@@ -13,6 +13,28 @@ declare(strict_types=1);
 
 namespace Boo\LuaParser\Types;
 
-final class FloatType extends AbstractScalarType
+use Boo\LuaParser\Interfaces\ValueInterface;
+use Boo\LuaParser\Traits\CommentableTrait;
+
+final class FloatType implements ValueInterface
 {
+    use CommentableTrait;
+
+    /**
+     * @var string
+     */
+    private $value;
+
+    public function __construct(string $value)
+    {
+        $this->value = $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toLua(int $depth = 0): string
+    {
+        return $this->value;
+    }
 }

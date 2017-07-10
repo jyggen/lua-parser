@@ -13,6 +13,6 @@ declare(strict_types=1);
 
 namespace Boo\LuaParser\Interfaces;
 
-interface KeyInterface
+interface KeyInterface extends TypeInterface
 {
 }

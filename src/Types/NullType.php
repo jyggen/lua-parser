@@ -13,11 +13,18 @@ declare(strict_types=1);
 
 namespace Boo\LuaParser\Types;
 
-use Boo\LuaParser\Interfaces\TypeInterface;
 use Boo\LuaParser\Interfaces\ValueInterface;
 use Boo\LuaParser\Traits\CommentableTrait;
 
-final class NullType implements TypeInterface, ValueInterface
+final class NullType implements ValueInterface
 {
     use CommentableTrait;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toLua(int $depth = 0): string
+    {
+        return 'nil';
+    }
 }

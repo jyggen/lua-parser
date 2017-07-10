@@ -15,4 +15,8 @@ namespace Boo\LuaParser\Interfaces;
 
 interface TypeInterface
 {
+    /**
+     * Transforms the type into Lua code.
+     */
+    public function toLua(int $depth = 0): string;
 }

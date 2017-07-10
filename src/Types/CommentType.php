@@ -22,21 +22,16 @@ final class CommentType implements TypeInterface
      */
     private $value;
 
-    /**
-     * @param string $value
-     */
     public function __construct(string $value)
     {
         $this->value = $value;
     }
 
     /**
-     * Gets the type's value.
-     *
-     * @return string
+     * {@inheritdoc}
      */
-    public function getValue(): string
+    public function toLua(int $depth = 0): string
     {
-        return $this->value;
+        return \sprintf(' --%s', $this->value);
     }
 }

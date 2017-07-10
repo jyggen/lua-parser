@@ -40,26 +40,6 @@ final class ArrayItemType implements TypeInterface
     }
 
     /**
-     * Gets the key of the array item.
-     *
-     * @return KeyInterface
-     */
-    public function getKey(): KeyInterface
-    {
-        return $this->key;
-    }
-
-    /**
-     * Gets the value of the array item.
-     *
-     * @return ValueInterface
-     */
-    public function getValue(): ValueInterface
-    {
-        return $this->value;
-    }
-
-    /**
      * Sets the value of the array item.
      *
      * @param ValueInterface $value
@@ -67,5 +47,28 @@ final class ArrayItemType implements TypeInterface
     public function setValue(ValueInterface $value): void
     {
         $this->value = $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toLua(int $depth = 0): string
+    {
+        $lua = \str_repeat("\t", $depth);
+        $lua .= \sprintf('[%s] = ', $this->key->toLua($depth));
+        $lua .= $this->value->toLua($depth);
+        $lua .= ',';
+
+        if ($this->value->getComment() !== null) {
+            $commentValue = $this->value->getComment();
+
+            if (\mb_substr($commentValue, -1) === ',') {
+                $lua = \mb_substr($lua, 0, -1);
+            }
+
+            $lua .= ' --'.$commentValue; // @todo: CommentType
+        }
+
+        return $lua.PHP_EOL;
     }
 }

@@ -13,11 +13,10 @@ declare(strict_types=1);
 
 namespace Boo\LuaParser\Types;
 
-use Boo\LuaParser\Interfaces\TypeInterface;
 use Boo\LuaParser\Interfaces\ValueInterface;
 use Boo\LuaParser\Traits\CommentableTrait;
 
-final class ArrayType implements TypeInterface, ValueInterface
+final class ArrayType implements ValueInterface
 {
     use CommentableTrait;
 
@@ -52,22 +51,39 @@ final class ArrayType implements TypeInterface, ValueInterface
     }
 
     /**
-     * Gets all items in the array.
-     *
-     * @return ArrayItemType[]
+     * {@inheritdoc}
      */
-    public function getItems(): array
+    public function toLua(int $depth = 0): string
     {
-        return $this->items;
-    }
+        $lua = '{'.PHP_EOL;
 
-    /**
-     * Gets all keyless values in the array.
-     *
-     * @return ValueInterface[]
-     */
-    public function getKeylessValues(): array
-    {
-        return $this->keylessValues;
+        ++$depth;
+
+        foreach ($this->keylessValues as $value) {
+            $lua .= \str_repeat("\t", $depth);
+            $lua .= $value->toLua($depth);
+            $lua .= ',';
+
+            if ($value->getComment() !== null) {
+                $lua .= $value->getComment()->toLua($depth);
+            }
+
+            $lua .= PHP_EOL;
+        }
+
+        $lua = \array_reduce(
+            $this->items,
+            function (string $lua, ArrayItemType $arrayItem) use ($depth) {
+                return $lua.$arrayItem->toLua($depth);
+            },
+            $lua
+        );
+
+        --$depth;
+
+        $lua .= \str_repeat("\t", $depth);
+        $lua .= '}';
+
+        return $lua;
     }
 }
