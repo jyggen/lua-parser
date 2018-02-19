@@ -20,7 +20,7 @@ interface ValueInterface extends TypeInterface
     /**
      * Gets the array value's comment.
      *
-     * @return CommentType|null
+     * @return null|CommentType
      */
     public function getComment(): ?CommentType;
 

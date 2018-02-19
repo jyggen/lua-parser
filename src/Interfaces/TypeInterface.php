@@ -16,6 +16,13 @@ namespace Boo\LuaParser\Interfaces;
 interface TypeInterface
 {
     /**
+     * Flattens the type.
+     *
+     * @return mixed
+     */
+    public function flatten();
+
+    /**
      * Transforms the type into Lua code.
      */
     public function toLua(int $depth = 0): string;

@@ -168,11 +168,11 @@ final class Lexer extends AbstractLexer
      */
     private function getAdvancedTypes(string &$value): int
     {
-        if (\mb_substr($value, -4) === '] = ' && $value[0] === '[') {
-            $value = \mb_substr($value, 1, -4);
+        if (true === $this->isKey($value)) {
+            $value = substr($value, 1, -4);
 
-            if ($value[0] === '"' && \mb_substr($value, -1) === '"') {
-                $value = \mb_substr($value, 1, -1);
+            if (true === $this->isAssocKey($value)) {
+                $value = substr($value, 1, -1);
 
                 return self::T_ASSOC_KEY;
             }
@@ -182,20 +182,14 @@ final class Lexer extends AbstractLexer
             return self::T_INDEX_KEY;
         }
 
-        if (\mb_substr($value, -3) === ' = ') {
-            $value = \mb_substr($value, 0, -3);
-
-            return self::T_VARIABLE;
-        }
-
-        if ($value === 'true' || $value === 'false') {
-            $value = ($value === 'true') ? true : false;
+        if (true === $this->isBoolean($value)) {
+            $value = ('true' === $value) ? true : false;
 
             return self::T_BOOLEAN;
         }
 
-        if (\is_numeric($value)) {
-            if (\mb_strpos($value, '.') !== false || \mb_stripos($value, 'e') !== false) {
+        if (is_numeric($value)) {
+            if (true === $this->isFloat($value)) {
                 return self::T_FLOAT;
             }
 
@@ -204,22 +198,76 @@ final class Lexer extends AbstractLexer
             return self::T_INTEGER;
         }
 
-        if ($value[0] === '"' && \mb_substr($value, -1) === '"') {
-            $value = \mb_substr($value, 1, -1);
+        if (true === $this->isString($value)) {
+            $value = substr($value, 1, -1);
 
             return self::T_STRING;
         }
 
-        if (\mb_substr($value, 0, self::COMMENT_LENGTH) === '--') {
-            $value = \mb_substr(\trim($value), self::COMMENT_LENGTH);
+        if ('--' === substr($value, 0, self::COMMENT_LENGTH)) {
+            $value = substr(trim($value), self::COMMENT_LENGTH);
 
             return self::T_COMMENT;
         }
 
-        if (\ctype_alpha($value[0]) || $value[0] === '_') {
+        if (' = ' === substr($value, -3)) {
+            $value = substr($value, 0, -3);
+
+            return self::T_VARIABLE;
+        }
+
+        if (true === $this->isVariable($value)) {
             return self::T_VARIABLE;
         }
 
         throw new UnexpectedValueException($value);
+    }
+
+    /**
+     * Returns whether the value is an associative key or not.
+     */
+    private function isAssocKey(string $value): bool
+    {
+        return '"' === $value[0] && '"' === substr($value, -1);
+    }
+
+    /**
+     * Returns whether the value is a booleam or not.
+     */
+    private function isBoolean(string $value): bool
+    {
+        return 'true' === $value || 'false' === $value;
+    }
+
+    /**
+     * Returns whether the value is a float or not.
+     */
+    private function isFloat(string $value): bool
+    {
+        return false !== strpos($value, '.') || false !== stripos($value, 'e');
+    }
+
+    /**
+     * Returns whether the value is a key or not.
+     */
+    private function isKey(string $value): bool
+    {
+        return '] = ' === substr($value, -4) && '[' === $value[0];
+    }
+
+    /**
+     * Returns whether the value is a string or not.
+     */
+    private function isString(string $value): bool
+    {
+        return '"' === $value[0] && '"' === substr($value, -1);
+    }
+
+    /**
+     * Returns whether the value is a variable or not.
+     */
+    private function isVariable(string $value): bool
+    {
+        return true === ctype_alpha($value[0]) || '_' === $value[0];
     }
 }

@@ -31,12 +31,12 @@ final class ArrayItemType implements TypeInterface
 
     /**
      * @param KeyInterface        $key
-     * @param ValueInterface|null $value
+     * @param null|ValueInterface $value
      */
     public function __construct(KeyInterface $key, ValueInterface $value = null)
     {
         $this->key = $key;
-        $this->value = ($value !== null) ? $value : new NullType();
+        $this->value = $value ?? new NullType();
     }
 
     /**
@@ -52,18 +52,28 @@ final class ArrayItemType implements TypeInterface
     /**
      * {@inheritdoc}
      */
+    public function flatten(): array
+    {
+        return [
+            $this->key->flatten() => $this->value->flatten(),
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function toLua(int $depth = 0): string
     {
-        $lua = \str_repeat("\t", $depth);
-        $lua .= \sprintf('[%s] = ', $this->key->toLua($depth));
+        $lua = str_repeat("\t", $depth);
+        $lua .= '['.$this->key->toLua($depth).'] = ';
         $lua .= $this->value->toLua($depth);
         $lua .= ',';
 
-        if ($this->value->getComment() !== null) {
+        if (null !== $this->value->getComment()) {
             $commentValue = $this->value->getComment();
 
-            if (\mb_substr($commentValue, -1) === ',') {
-                $lua = \mb_substr($lua, 0, -1);
+            if (',' === substr($commentValue, -1)) {
+                $lua = substr($lua, 0, -1);
             }
 
             $lua .= ' --'.$commentValue; // @todo: CommentType

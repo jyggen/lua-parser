@@ -34,8 +34,16 @@ final class StringType implements KeyInterface, ValueInterface
     /**
      * {@inheritdoc}
      */
+    public function flatten(): string
+    {
+        return $this->value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function toLua(int $depth = 0): string
     {
-        return \sprintf('"%s"', $this->value);
+        return '"'.$this->value.'"';
     }
 }

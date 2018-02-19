@@ -34,6 +34,14 @@ final class IntegerType implements KeyInterface, ValueInterface
     /**
      * {@inheritdoc}
      */
+    public function flatten(): int
+    {
+        return $this->value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function toLua(int $depth = 0): string
     {
         return (string) $this->value;

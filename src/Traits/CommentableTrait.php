@@ -18,14 +18,14 @@ use Boo\LuaParser\Types\CommentType;
 trait CommentableTrait
 {
     /**
-     * @var CommentType|null
+     * @var null|CommentType
      */
     private $comment;
 
     /**
      * Gets the object's comment.
      *
-     * @return CommentType|null
+     * @return null|CommentType
      */
     public function getComment(): ?CommentType
     {

@@ -27,7 +27,7 @@ final class ParserTest extends TestCase
 
         $finder->in('tests/Fixtures');
         $finder->name('*.lua');
-        $finder->sort(function (SplFileInfo $a, SplFileInfo $b) {
+        $finder->sort(static function (SplFileInfo $a, SplFileInfo $b) {
             return $a->getSize() - $b->getSize();
         });
 
@@ -41,12 +41,12 @@ final class ParserTest extends TestCase
      */
     public function testAgainstFixtures(SplFileInfo $file): void
     {
-        $lua = \preg_replace('/\R/u', PHP_EOL, $file->getContents());
+        $lua = preg_replace('/\R/u', PHP_EOL, $file->getContents());
         $parser = new Parser($lua);
 
         $this->assertSame(
-            \md5($lua),
-            \md5($parser->getLua()),
+            md5($lua),
+            md5($parser->getLua()),
             './bin/inspect-lua '.$file->getPathname()
         );
     }

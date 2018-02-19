@@ -30,12 +30,22 @@ final class VariableType implements TypeInterface
 
     /**
      * @param string              $name
-     * @param ValueInterface|null $value
+     * @param null|ValueInterface $value
      */
     public function __construct(string $name, ValueInterface $value = null)
     {
         $this->name = $name;
-        $this->value = ($value !== null) ? $value : new NullType();
+        $this->value = $value ?? new NullType();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function flatten(): array
+    {
+        return [
+            $this->name => $this->value->flatten(),
+        ];
     }
 
     /**
@@ -51,9 +61,6 @@ final class VariableType implements TypeInterface
      */
     public function toLua(int $depth = 0): string
     {
-        return \vsprintf('%s = %s', [
-            $this->name,
-            $this->value->toLua($depth),
-        ]).PHP_EOL;
+        return $this->name.' = '.$this->value->toLua($depth).PHP_EOL;
     }
 }

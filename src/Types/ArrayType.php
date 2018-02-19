@@ -53,6 +53,24 @@ final class ArrayType implements ValueInterface
     /**
      * {@inheritdoc}
      */
+    public function flatten(): array
+    {
+        $array = [];
+
+        foreach ($this->keylessValues as $value) {
+            $array[] = $value->flatten();
+        }
+
+        foreach ($this->items as $item) {
+            $array = array_merge($array, $item->flatten());
+        }
+
+        return $array;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function toLua(int $depth = 0): string
     {
         $lua = '{'.PHP_EOL;
@@ -60,20 +78,20 @@ final class ArrayType implements ValueInterface
         ++$depth;
 
         foreach ($this->keylessValues as $value) {
-            $lua .= \str_repeat("\t", $depth);
+            $lua .= str_repeat("\t", $depth);
             $lua .= $value->toLua($depth);
             $lua .= ',';
 
-            if ($value->getComment() !== null) {
+            if (null !== $value->getComment()) {
                 $lua .= $value->getComment()->toLua($depth);
             }
 
             $lua .= PHP_EOL;
         }
 
-        $lua = \array_reduce(
+        $lua = array_reduce(
             $this->items,
-            function (string $lua, ArrayItemType $arrayItem) use ($depth) {
+            static function (string $lua, ArrayItemType $arrayItem) use ($depth) {
                 return $lua.$arrayItem->toLua($depth);
             },
             $lua
@@ -81,7 +99,7 @@ final class ArrayType implements ValueInterface
 
         --$depth;
 
-        $lua .= \str_repeat("\t", $depth);
+        $lua .= str_repeat("\t", $depth);
         $lua .= '}';
 
         return $lua;

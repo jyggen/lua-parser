@@ -20,22 +20,22 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
-\chdir(__DIR__.'/..');
+chdir(__DIR__.'/..');
 
 require 'vendor/autoload.php';
 
-(function (): void {
-    $name = \basename(__FILE__);
+(static function (): void {
+    $name = basename(__FILE__);
     $application = new Application($name, '1.0.0');
     $command = $application->register($name);
 
     $command->addArgument('path', InputArgument::REQUIRED, 'Path to your World of Warcraft directory');
-    $command->setCode(function (InputInterface $input, OutputInterface $output): int {
+    $command->setCode(static function (InputInterface $input, OutputInterface $output): int {
         $style = new SymfonyStyle($input, $output);
         $path = $input->getArgument('path');
         $wtfPath = $path.'/WTF';
 
-        if (\is_dir($path) === false || \is_dir($wtfPath) === false) {
+        if (false === is_dir($path) || false === is_dir($wtfPath)) {
             $style->error('"'.$path.'" is not a valid World of Warcraft directory.');
 
             return 1;
@@ -44,19 +44,19 @@ require 'vendor/autoload.php';
         $filesystem = new Filesystem();
         $finder = (new Finder())->in($wtfPath)->name('*.lua');
 
-        $style->progressStart(\count($finder));
+        $style->progressStart(count($finder));
 
         foreach ($finder as $file) {
             $pathname = $file->getPathname();
-            $hash = \hash_file('sha256', $pathname);
-            $fixture = \vsprintf('tests/Fixtures/%s/%s/%s/%s.lua', [
-                \mb_substr($hash, 0, 2),
-                \mb_substr($hash, 2, 2),
-                \mb_substr($hash, 4, 2),
-                \mb_substr($hash, 6),
+            $hash = hash_file('sha256', $pathname);
+            $fixture = vsprintf('tests/Fixtures/%s/%s/%s/%s.lua', [
+                substr($hash, 0, 2),
+                substr($hash, 2, 2),
+                substr($hash, 4, 2),
+                substr($hash, 6),
             ]);
 
-            if ($filesystem->exists($fixture) === false) {
+            if (false === $filesystem->exists($fixture)) {
                 $filesystem->copy($pathname, $fixture);
             }
 

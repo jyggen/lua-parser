@@ -30,8 +30,15 @@ final class CommentType implements TypeInterface
     /**
      * {@inheritdoc}
      */
+    public function flatten(): void
+    {
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function toLua(int $depth = 0): string
     {
-        return \sprintf(' --%s', $this->value);
+        return ' --'.$this->value;
     }
 }

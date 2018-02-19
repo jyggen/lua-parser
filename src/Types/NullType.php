@@ -23,6 +23,14 @@ final class NullType implements ValueInterface
     /**
      * {@inheritdoc}
      */
+    public function flatten()
+    {
+        return null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function toLua(int $depth = 0): string
     {
         return 'nil';

@@ -35,6 +35,17 @@ final class Parser
         $this->lexer->setInput($lua);
     }
 
+    public function getArray(): array
+    {
+        $array = [];
+
+        foreach ($this->getAst() as $type) {
+            $array = array_merge($array, $type->flatten());
+        }
+
+        return $array;
+    }
+
     /**
      * Gets the Lua string's AST.
      *
@@ -42,7 +53,7 @@ final class Parser
      */
     public function getAst(): array
     {
-        if ($this->ast !== null) {
+        if (null !== $this->ast) {
             return $this->ast;
         }
 
@@ -52,22 +63,22 @@ final class Parser
         $contexts = [];
 
         while (null !== $this->lexer->glimpse()) {
-            \end($contexts);
+            end($contexts);
             $this->lexer->moveNext();
 
             $type = $this->lexer->lookahead['type'];
             $value = $this->lexer->lookahead['value'];
 
-            $contextKey = \key($contexts);
-            $context = ($contextKey !== null) ? $contexts[$contextKey] : null;
+            $contextKey = key($contexts);
+            $context = (null !== $contextKey) ? $contexts[$contextKey] : null;
 
-            if ($this->lexer->isNextTokenAny([Lexer::T_ASSOC_KEY, Lexer::T_INDEX_KEY]) === true) {
-                if ($context instanceof Types\ArrayType === false) {
-                    throw new UnexpectedValueException(\get_class($context).' is not an instance of ArrayType');
+            if (in_array($type, [Lexer::T_ASSOC_KEY, Lexer::T_INDEX_KEY], true)) {
+                if (false === $context instanceof Types\ArrayType) {
+                    throw new UnexpectedValueException(get_class($context).' is not an instance of ArrayType');
                 }
 
                 $context->addItem($contexts[] = new Types\ArrayItemType(
-                    ($type === Lexer::T_ASSOC_KEY)
+                    (Lexer::T_ASSOC_KEY === $type)
                         ? new Types\StringType($value)
                         : new Types\IntegerType($value)
                 ));
@@ -75,35 +86,35 @@ final class Parser
                 continue;
             }
 
-            if ($this->lexer->isNextToken(Lexer::T_COMMENT) === true) {
-                if ($context instanceof Types\ArrayItemType === false) {
+            if (Lexer::T_COMMENT === $type) {
+                if (false === $context instanceof Types\ArrayItemType) {
                     continue;
                 }
 
-                $lastCharacter = \mb_substr(\trim($value), -1);
+                $lastCharacter = substr(trim($value), -1);
 
-                if ($this->lexer->isA($lastCharacter, Lexer::T_COMMA) === true) {
-                    \array_pop($contexts);
+                if (true === $this->lexer->isA($lastCharacter, Lexer::T_COMMA)) {
+                    array_pop($contexts);
                 }
 
                 continue;
             }
 
-            if ($this->lexer->isNextToken(Lexer::T_COMMA) === true) {
+            if (Lexer::T_COMMA === $type) {
                 if ($context instanceof Types\ArrayItemType) {
-                    \array_pop($contexts);
+                    array_pop($contexts);
                 }
 
                 continue;
             }
 
-            if ($this->lexer->isNextToken(Lexer::T_VARIABLE) === true) {
+            if (Lexer::T_VARIABLE === $type) {
                 $ast[] = $contexts[] = new Types\VariableType($value);
 
                 continue;
             }
 
-            if ($this->lexer->isNextToken(Lexer::T_CURLY_BRACKET_OPEN) === true) {
+            if (Lexer::T_CURLY_BRACKET_OPEN === $type) {
                 if ($context instanceof Types\VariableType || $context instanceof Types\ArrayItemType) {
                     $context->setValue($contexts[] = new Types\ArrayType());
                     continue;
@@ -117,25 +128,25 @@ final class Parser
                 throw new UnexpectedValueException();
             }
 
-            if ($this->lexer->isNextToken(Lexer::T_CURLY_BRACKET_CLOSE) === true) {
+            if (Lexer::T_CURLY_BRACKET_CLOSE === $type) {
                 $this->lexer->peek();
                 $potentialComment = $this->lexer->peek();
 
-                if ($potentialComment['type'] === Lexer::T_COMMENT) {
+                if (Lexer::T_COMMENT === $potentialComment['type']) {
                     $context->setComment(new CommentType($potentialComment['value']));
                 }
 
                 $this->lexer->resetPeek();
 
-                \array_pop($contexts);
+                array_pop($contexts);
                 continue;
             }
 
-            if ($this->lexer->isNextToken(Lexer::T_SQUARE_BRACKET_OPEN) === true) {
+            if (Lexer::T_SQUARE_BRACKET_OPEN === $type) {
                 $key = $this->lexer->glimpse();
 
-                if ($context instanceof Types\ArrayType === false) {
-                    throw new UnexpectedValueException(\get_class($context).' is not an instance of ArrayType');
+                if (false === $context instanceof Types\ArrayType) {
+                    throw new UnexpectedValueException(get_class($context).' is not an instance of ArrayType');
                 }
 
                 switch ($key['type']) {
@@ -155,13 +166,13 @@ final class Parser
                 continue;
             }
 
-            if ($this->lexer->isNextTokenAny([
+            if (in_array($type, [
                 Lexer::T_BOOLEAN,
                 Lexer::T_FLOAT,
                 Lexer::T_INTEGER,
                 Lexer::T_NULL,
                 Lexer::T_STRING,
-            ]) === true) {
+            ], true)) {
                 switch ($type) {
                     case Lexer::T_BOOLEAN:
                         $value = new Types\BooleanType($value);
@@ -184,13 +195,13 @@ final class Parser
 
                 $potentialComment = $this->lexer->peek();
 
-                if ($potentialComment['type'] !== Lexer::T_COMMENT) {
+                if (Lexer::T_COMMENT !== $potentialComment['type']) {
                     $potentialComment = $this->lexer->peek();
                 }
 
                 $this->lexer->resetPeek();
 
-                if ($potentialComment['type'] === Lexer::T_COMMENT) {
+                if (Lexer::T_COMMENT === $potentialComment['type']) {
                     $value->setComment(new CommentType($potentialComment['value']));
                 }
 

@@ -22,12 +22,12 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
-\chdir(__DIR__.'/..');
+chdir(__DIR__.'/..');
 
 require 'vendor/autoload.php';
 
 (function (): void {
-    $name = \basename(__FILE__);
+    $name = basename(__FILE__);
     $application = new Application($name, '1.0.0');
     $command = $application->register($name);
 
@@ -36,13 +36,13 @@ require 'vendor/autoload.php';
         $style = new SymfonyStyle($input, $output);
         $path = $input->getArgument('lua');
 
-        if (\is_file($path) === false || pathinfo($path, PATHINFO_EXTENSION) !== 'lua') {
+        if (is_file($path) === false || pathinfo($path, PATHINFO_EXTENSION) !== 'lua') {
             $style->error('"'.$path.'" is not a valid Lua file.');
 
             return 1;
         }
 
-        $theirs = \preg_replace('/\R/u', PHP_EOL, file_get_contents($path));
+        $theirs = preg_replace('/\R/u', PHP_EOL, file_get_contents($path));
         $differ = new Differ();
         $before = ['time' => microtime(true), 'memory' => memory_get_peak_usage(true)];
         $parser = new Parser($theirs);
@@ -51,7 +51,7 @@ require 'vendor/autoload.php';
         $time = ($after['time'] - $before['time']) * 1000;
         $memory = ($after['memory'] - $before['memory']) / 1024 / 1024;
 
-        if (\md5($theirs) !== \md5($ours)) {
+        if (md5($theirs) !== md5($ours)) {
             $theirs = explode(PHP_EOL, $theirs);
             $ours = explode(PHP_EOL, $ours);
             $lines = $differ->diffToArray($theirs, $ours);

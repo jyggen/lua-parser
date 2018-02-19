@@ -33,8 +33,16 @@ final class BooleanType implements ValueInterface
     /**
      * {@inheritdoc}
      */
+    public function flatten(): bool
+    {
+        return $this->value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function toLua(int $depth = 0): string
     {
-        return ($this->value === true) ? 'true' : 'false';
+        return (true === $this->value) ? 'true' : 'false';
     }
 }

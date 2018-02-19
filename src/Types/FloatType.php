@@ -33,6 +33,14 @@ final class FloatType implements ValueInterface
     /**
      * {@inheritdoc}
      */
+    public function flatten(): float
+    {
+        return (float) $this->value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function toLua(int $depth = 0): string
     {
         return $this->value;
