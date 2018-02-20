@@ -14,10 +14,7 @@
        "source": "https://github.com/jyggen/lua-parser"
     },
     "require": {
-        "php": "^7.1",
-        "ext-ctype": "*",
-        "ext-mbstring": "*",
-        "doctrine/lexer": "^1.0"
+        "php": "^7.1"
     },
     "require-dev": {
         "boo/code-standard": "^0.1.0",
@@ -26,6 +23,7 @@
         "sebastian/diff": "^1.4.3",
         "symfony/console": "^3.3.6",
         "symfony/finder": "^3.3.6",
+        "symfony/process": "^3.3.6",
         "symfony/var-dumper": "^4.0.0"
     },
     "autoload": {

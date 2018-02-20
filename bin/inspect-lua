@@ -45,7 +45,7 @@ require 'vendor/autoload.php';
         $theirs = preg_replace('/\R/u', PHP_EOL, file_get_contents($path));
         $differ = new Differ();
         $before = ['time' => microtime(true), 'memory' => memory_get_peak_usage(true)];
-        $parser = new Parser($theirs);
+        $parser = new Parser($path);
         $ours = $parser->getLua();
         $after = ['time' => microtime(true), 'memory' => memory_get_peak_usage(true)];
         $time = ($after['time'] - $before['time']) * 1000;

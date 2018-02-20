@@ -1,0 +1,85 @@
+#!/bin/sh
+_=[[
+    IFS=:
+
+    for D in ${PATH}; do
+        for F in "${D}"/lua "${D}"/lua5* "${D}"/luajit*; do
+            if [ -x "${F}" ]; then
+                exec "${F}" "$0" "$@"
+            fi
+        done
+    done
+
+    printf "%s: no Lua interpreter found\n" "${0##*/}" >&2
+    exit 1
+]]
+
+function file_exists(name)
+   local f = io.open(name, "r")
+
+   if f~=nil then
+        io.close(f)
+
+        return true
+   end
+
+   return false
+end
+
+function fix_null(t)
+    if type(t) == "table" then
+        for k, v in pairs(t) do
+            print(inspect(k))
+            fix_null(v)
+        end
+    else
+        print(inspect(t))
+    end
+end
+
+function script_path()
+   local str = debug.getinfo(2, "S").source:sub(2)
+   return str:match("(.*/)")
+end
+
+libPath = script_path() .. "../lua/"
+colors = dofile(libPath .. "ansicolors.lua")
+json = dofile(libPath .. "JSON.lua")
+inspect = dofile(libPath .. "inspect.lua")
+
+if arg[1] == nil then
+    print()
+    print(colors("%{redbg}                                          %{reset}"))
+    print(colors("%{redbg}  Not enough arguments (missing: \"lua\").  %{reset}"))
+    print(colors("%{redbg}                                          %{reset}"))
+    print()
+    print(colors("%{green}fixture-to-json <lua>%{reset}"))
+    print()
+    os.exit(1)
+end
+
+if file_exists(arg[1]) == false then
+    print()
+    print(colors("%{red}  [ERROR]%{reset} %{cyan}" .. arg[1] .. "%{reset} is not a valid Lua file."))
+    print()
+    os.exit(1)
+end
+
+old = getmetatable(_G)
+fixtureVars = {}
+
+setmetatable(_G, {
+    __newindex = function (t, k, v)
+        if v == nil then
+            fixtureVars[tostring(k)] = json.null
+        else
+
+            fixtureVars[tostring(k)] = v
+        end
+    end
+})
+
+dofile(arg[1])
+setmetatable(_G, old)
+
+print(json.encode(fixtureVars))

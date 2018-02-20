@@ -58,11 +58,22 @@ final class ArrayType implements ValueInterface
         $array = [];
 
         foreach ($this->keylessValues as $value) {
+            $comment = $value->getComment();
+
+            if (
+                $comment !== null &&
+                empty($this->items) === false &&
+                preg_match('/^ -- \[(\d+)\]$/', $comment->toLua(), $match) === 1
+            ) {
+                $array[$match[1]] = $value->flatten();
+                continue;
+            }
+
             $array[] = $value->flatten();
         }
 
         foreach ($this->items as $item) {
-            $array = array_merge($array, $item->flatten());
+            $array += $item->flatten();
         }
 
         return $array;

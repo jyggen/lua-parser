@@ -30,7 +30,7 @@ require 'vendor/autoload.php';
     $command = $application->register($name);
 
     $command->addArgument('path', InputArgument::REQUIRED, 'Path to your World of Warcraft directory');
-    $command->setCode(static function (InputInterface $input, OutputInterface $output): int {
+    $command->setCode(function (InputInterface $input, OutputInterface $output): int {
         $style = new SymfonyStyle($input, $output);
         $path = $input->getArgument('path');
         $wtfPath = $path.'/WTF';

@@ -18,9 +18,13 @@ use Generator;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\Process\Process;
 
 final class ParserTest extends TestCase
 {
+    /**
+     * Provides tests with Lua code.
+     */
     public function fixtureProvider(): Generator
     {
         $finder = new Finder();
@@ -39,15 +43,32 @@ final class ParserTest extends TestCase
     /**
      * @dataProvider fixtureProvider
      */
-    public function testAgainstFixtures(SplFileInfo $file): void
+    public function testGetLua(SplFileInfo $file): void
     {
         $lua = preg_replace('/\R/u', PHP_EOL, $file->getContents());
-        $parser = new Parser($lua);
+        $parser = new Parser($file->getPathname());
 
-        $this->assertSame(
+        self::assertSame(
             md5($lua),
             md5($parser->getLua()),
             './bin/inspect-lua '.$file->getPathname()
+        );
+    }
+
+    /**
+     * @dataProvider fixtureProvider
+     */
+    public function testGetArray(SplFileInfo $file): void
+    {
+        $process = new Process(['./bin/fixture-to-json', $file->getPathname()], dirname(__DIR__));
+        $parser = new Parser($file->getPathname());
+
+        $process->mustRun();
+
+        self::assertEquals(
+            json_decode($process->getOutput(), true),
+            $parser->getArray(),
+            $process->getCommandLine()
         );
     }
 }

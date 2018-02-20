@@ -13,28 +13,73 @@ declare(strict_types=1);
 
 namespace Boo\LuaParser;
 
-use Boo\LuaParser\Types\ArrayType;
-use Boo\LuaParser\Types\CommentType;
+use Boo\LuaParser\Interfaces\ValueInterface;
 use UnexpectedValueException;
 
 final class Parser
 {
+    private const COMMA_REGEX = '(,)?';
+
+    private const COMMENT_REGEX = '(?: --(.*?))?';
+
+    private const INT_REGEX = '-?(?:[0-9]+(?:[\.][0-9]+)*)(?:e[+-]?[0-9]+)?';
+
+    private const KEY_REGEXS = [
+        self::INT_REGEX, // int
+        self::STRING_REGEX, // string
+    ];
+
+    private const STRING_REGEX = '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"';
+
+    private const VALUE_REGEXS = [
+        '{', // array start
+        'true|false', // bool
+        'nil', // null
+        self::INT_REGEX, // int
+        self::STRING_REGEX, // string
+    ];
+
+    private const VARIABLE_REGEX = '[a-z_\\\][a-z0-9_\:\\\]*[a-z0-9_]{1}';
+
     /**
      * @var array
      */
     private $ast;
 
     /**
-     * @var Lexer
+     * @var resource
      */
-    private $lexer;
+    private $pointer;
 
-    public function __construct(string $lua)
+    /**
+     * @var array
+     */
+    private $regexs;
+
+    public function __construct(string $filepath)
     {
-        $this->lexer = new Lexer();
-        $this->lexer->setInput($lua);
+        $keyRegex = sprintf('((?:%s))', implode(')|(?:', self::KEY_REGEXS));
+        $variableRegex = sprintf('(%s)', self::VARIABLE_REGEX);
+        $valueRegex = vsprintf('((?:%s))%s%s', [
+            implode(')|(?:', self::VALUE_REGEXS),
+            self::COMMA_REGEX,
+            self::COMMENT_REGEX,
+        ]);
+
+        $this->pointer = fopen($filepath, 'rb');
+        $this->regexs = [
+            'array_end' => sprintf('/^}%s%s$/i', self::COMMA_REGEX, self::COMMENT_REGEX),
+            'keyed_item' => sprintf('/^\[%s\] = %s$/i', $keyRegex, $valueRegex),
+            'keyless_item' => sprintf('/^%s$/i', $valueRegex),
+            'variable' => sprintf('/^%s = %s$/i', $variableRegex, $valueRegex),
+        ];
     }
 
+    /**
+     * Builds an array out of the Lua string's AST.
+     *
+     * @throws UnexpectedValueException
+     */
     public function getArray(): array
     {
         $array = [];
@@ -57,168 +102,77 @@ final class Parser
             return $this->ast;
         }
 
-        $this->lexer->reset();
-
         $ast = [];
         $contexts = [];
 
-        while (null !== $this->lexer->glimpse()) {
-            end($contexts);
-            $this->lexer->moveNext();
+        while (false !== ($line = fgets($this->pointer))) {
+            $line = trim($line);
 
-            $type = $this->lexer->lookahead['type'];
-            $value = $this->lexer->lookahead['value'];
+            if ('' === $line) {
+                continue;
+            }
+
+            end($contexts);
 
             $contextKey = key($contexts);
             $context = (null !== $contextKey) ? $contexts[$contextKey] : null;
 
-            if (in_array($type, [Lexer::T_ASSOC_KEY, Lexer::T_INDEX_KEY], true)) {
-                if (false === $context instanceof Types\ArrayType) {
-                    throw new UnexpectedValueException(get_class($context).' is not an instance of ArrayType');
+            // Variable
+            if (1 === preg_match($this->regexs['variable'], $line, $match)) {
+                $ast[] = $contexts[] = $context = new Types\VariableType($match[1]);
+                $value = $this->getValueObject($match[2], $match[4] ?? null);
+
+                if ($value instanceof Types\ArrayType) {
+                    $contexts[] = $value;
                 }
 
-                $context->addItem($contexts[] = new Types\ArrayItemType(
-                    (Lexer::T_ASSOC_KEY === $type)
-                        ? new Types\StringType($value)
-                        : new Types\IntegerType($value)
-                ));
+                $context->setValue($value);
 
                 continue;
             }
 
-            if (Lexer::T_COMMENT === $type) {
-                if (false === $context instanceof Types\ArrayItemType) {
-                    continue;
+            // Array Item (keyed)
+            if (1 === preg_match($this->regexs['keyed_item'], $line, $match)) {
+                $oldContext = $context;
+                $key = is_numeric($match[1])
+                    ? new Types\IntegerType((int) $match[1])
+                    : new Types\StringType(substr($match[1], 1, -1));
+
+                $oldContext->addItem($context = new Types\ArrayItemType($key));
+
+                $value = $this->getValueObject($match[2], $match[4] ?? null);
+
+                if ($value instanceof Types\ArrayType) {
+                    $contexts[] = $value;
                 }
 
-                $lastCharacter = substr(trim($value), -1);
-
-                if (true === $this->lexer->isA($lastCharacter, Lexer::T_COMMA)) {
-                    array_pop($contexts);
-                }
-
+                $context->setValue($value);
                 continue;
             }
 
-            if (Lexer::T_COMMA === $type) {
-                if ($context instanceof Types\ArrayItemType) {
-                    array_pop($contexts);
+            // Array Item (keyeless)
+            if (1 === preg_match($this->regexs['keyless_item'], $line, $match)) {
+                $value = $this->getValueObject($match[1], $match[3] ?? null);
+
+                if ($value instanceof Types\ArrayType) {
+                    $contexts[] = $value;
                 }
 
+                $context->addKeylessValue($value);
                 continue;
             }
 
-            if (Lexer::T_VARIABLE === $type) {
-                $ast[] = $contexts[] = new Types\VariableType($value);
-
-                continue;
-            }
-
-            if (Lexer::T_CURLY_BRACKET_OPEN === $type) {
-                if ($context instanceof Types\VariableType || $context instanceof Types\ArrayItemType) {
-                    $context->setValue($contexts[] = new Types\ArrayType());
-                    continue;
+            // Array End
+            if (1 === preg_match($this->regexs['array_end'], $line, $match)) {
+                if (isset($match[2])) {
+                    $context->setComment(new Types\CommentType($match[2]));
                 }
-
-                if ($context instanceof Types\ArrayType) {
-                    $context->addKeylessValue($contexts[] = new Types\ArrayType());
-                    continue;
-                }
-
-                throw new UnexpectedValueException();
-            }
-
-            if (Lexer::T_CURLY_BRACKET_CLOSE === $type) {
-                $this->lexer->peek();
-                $potentialComment = $this->lexer->peek();
-
-                if (Lexer::T_COMMENT === $potentialComment['type']) {
-                    $context->setComment(new CommentType($potentialComment['value']));
-                }
-
-                $this->lexer->resetPeek();
 
                 array_pop($contexts);
                 continue;
             }
 
-            if (Lexer::T_SQUARE_BRACKET_OPEN === $type) {
-                $key = $this->lexer->glimpse();
-
-                if (false === $context instanceof Types\ArrayType) {
-                    throw new UnexpectedValueException(get_class($context).' is not an instance of ArrayType');
-                }
-
-                switch ($key['type']) {
-                    case Lexer::T_INTEGER:
-                        $key = new Types\IntegerType($key['value']);
-                        break;
-                    case Lexer::T_STRING:
-                        $key = new Types\StringType($key['value']);
-                        break;
-                    default:
-                        throw new UnexpectedValueException();
-                }
-
-                $context->addItem($contexts[] = new Types\ArrayItemType($key));
-
-                $this->lexer->moveNext(); // skip the key we've already glimpsed.
-                continue;
-            }
-
-            if (in_array($type, [
-                Lexer::T_BOOLEAN,
-                Lexer::T_FLOAT,
-                Lexer::T_INTEGER,
-                Lexer::T_NULL,
-                Lexer::T_STRING,
-            ], true)) {
-                switch ($type) {
-                    case Lexer::T_BOOLEAN:
-                        $value = new Types\BooleanType($value);
-                        break;
-                    case Lexer::T_FLOAT:
-                        $value = new Types\FloatType($value);
-                        break;
-                    case Lexer::T_INTEGER:
-                        $value = new Types\IntegerType($value);
-                        break;
-                    case Lexer::T_NULL:
-                        $value = new Types\NullType();
-                        break;
-                    case Lexer::T_STRING:
-                        $value = new Types\StringType($value);
-                        break;
-                    default:
-                        throw new UnexpectedValueException();
-                }
-
-                $potentialComment = $this->lexer->peek();
-
-                if (Lexer::T_COMMENT !== $potentialComment['type']) {
-                    $potentialComment = $this->lexer->peek();
-                }
-
-                $this->lexer->resetPeek();
-
-                if (Lexer::T_COMMENT === $potentialComment['type']) {
-                    $value->setComment(new CommentType($potentialComment['value']));
-                }
-
-                if ($context instanceof Types\ArrayItemType || $context instanceof Types\VariableType) {
-                    $context->setValue($value);
-                    continue;
-                }
-
-                if ($context instanceof Types\ArrayType) {
-                    $context->addKeylessValue($value);
-                    continue;
-                }
-
-                throw new UnexpectedValueException();
-            }
-
-            throw new UnexpectedValueException();
+            throw new UnexpectedValueException(sprintf('Unable to parse line: %s', $line));
         }
 
         $this->ast = $ast;
@@ -226,6 +180,9 @@ final class Parser
         return $ast;
     }
 
+    /**
+     * Transforms the Lua string's AST back into a Lua string.
+     */
     public function getLua(): string
     {
         $lua = PHP_EOL;
@@ -235,5 +192,33 @@ final class Parser
         }
 
         return $lua;
+    }
+
+    /**
+     * Gets a value object based on the value's type.
+     */
+    private function getValueObject(string $value, ?string $comment = null): ValueInterface
+    {
+        if ('nil' === $value) { // Null
+            $valueObject = new Types\NullType();
+        } elseif ('{' === $value) { // Array
+            $valueObject = new Types\ArrayType();
+        } elseif ('true' === $value || 'false' === $value) {
+            $valueObject = new Types\BooleanType('true' === $value);
+        } elseif (is_numeric($value)) { // Int and Float
+            if (false !== strpos($value, '.') || false !== stripos($value, 'e')) {
+                $valueObject = new Types\FloatType($value);
+            } else {
+                $valueObject = new Types\IntegerType((int) $value);
+            }
+        } else { // String
+            $valueObject = new Types\StringType(substr($value, 1, -1));
+        }
+
+        if (null !== $comment) {
+            $valueObject->setComment(new Types\CommentType($comment));
+        }
+
+        return $valueObject;
     }
 }

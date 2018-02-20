@@ -36,7 +36,7 @@ final class StringType implements KeyInterface, ValueInterface
      */
     public function flatten(): string
     {
-        return $this->value;
+        return stripslashes($this->value);
     }
 
     /**
